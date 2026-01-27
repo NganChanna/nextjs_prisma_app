@@ -13,7 +13,15 @@ export default async function EditPost({
 
   const post = await prisma.post.findUnique({
     where: { id },
+    include: {
+      author: true,
+    }
   })
+
+  const users = await prisma.users.findMany({
+    orderBy: { name: 'asc'},
+  });
+
 
   if (!post) notFound()
 
@@ -33,6 +41,37 @@ export default async function EditPost({
 
         <div className="bg-white border border-gray-100 rounded-[2rem] shadow-sm p-8 md:p-12">
           <form action={updatePostWithId} className="space-y-10">
+
+             {/* Author Select */}
+          <div className="space-y-3">
+            <label
+              htmlFor="authorId"
+              className="text-sm font-bold text-gray-700 ml-1 uppercase tracking-wider"
+            >
+              Author
+            </label>
+
+            <select
+              id="authorId"
+              name="authorId"
+              required  
+              className="w-full px-6 py-4 bg-gray-50 border border-transparent rounded-2xl
+                focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500
+                transition-all outline-none text-lg text-gray-800"
+            >
+              <option value="" disabled selected>
+                Select your name
+              </option>
+
+              {users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.name ?? 'Unnamed Author'}
+                  {user.id === post.authorId && ' (current)'}
+                </option>
+              ))}
+            </select>
+            </div>
+
             <div className="space-y-3">
               <label htmlFor="title" className="text-sm font-bold text-gray-700 ml-1 uppercase tracking-wider">
                 Post Title
