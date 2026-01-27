@@ -14,7 +14,7 @@ export function DeleteButton({ id }: { id: string }) {
         }
       }}
       disabled={isPending}
-      className="text-sm font-bold text-red-500 hover:text-red-600 transition-all bg-red-50 px-4 py-2 rounded-full hover:bg-red-100 disabled:opacity-50"
+      className="text-sm font-bold text-red-500 hover:text-red-600 transition-all bg-red-500/10 px-4 py-2 rounded-full hover:bg-red-500/20 disabled:opacity-50"
     >
       {isPending ? "Deleting..." : "Delete Post"}
     </button>
