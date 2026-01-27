@@ -5,21 +5,28 @@ import { redirect } from 'next/navigation'
 import { SubmitButton } from '@/components/SubmitButton'
 import Link from 'next/link'
 
-export default function NewPost() {
+export default async function NewPost() {
+
+  const users = await prisma.users.findMany({
+    orderBy: { name: 'asc'},
+  });
+
   async function createPost(formData: FormData) {
     'use server'
 
     const title = formData.get('title') as string
     const content = formData.get('content') as string
+    const authorId = formData.get('authorId') as string
 
-    const user = await prisma.users.findFirst()
-    if (!user) throw new Error('No users found.')
-
+    if (!authorId) {
+      throw new Error('Author is required')
+    }
+   
     await prisma.post.create({
       data: {
         title,
         content,
-        authorId: user.id,
+        authorId,
         published: true,
       },
     })
@@ -44,6 +51,37 @@ export default function NewPost() {
         {/* Form Card */}
         <div className="bg-white border border-gray-100 rounded-[2rem] shadow-sm p-8 md:p-12">
           <Form action={createPost} className="space-y-10">
+
+            {/* Author Select */}
+          <div className="space-y-3">
+            <label
+              htmlFor="authorId"
+              className="text-sm font-bold text-gray-700 ml-1 uppercase tracking-wider"
+            >
+              Author
+            </label>
+
+            <select
+              id="authorId"
+              name="authorId"
+              required
+              className="w-full px-6 py-4 bg-gray-50 border border-transparent rounded-2xl
+                focus:bg-white focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500
+                transition-all outline-none text-lg text-gray-800"
+            >
+              <option value="" disabled selected>
+                Select your name
+              </option>
+
+              {users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.name ?? 'Unnamed Author'}
+                </option>
+              ))}
+            </select>
+            </div>
+
+
             {/* Title Input */}
             <div className="space-y-3">
               <label 
