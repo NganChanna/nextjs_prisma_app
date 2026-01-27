@@ -10,7 +10,7 @@ const prisma = new PrismaClient({
   adapter,
 });
 
-const userData: Prisma.UserCreateInput[] = [
+const userData: Prisma.usersCreateInput[] = [
   {
     name: "Alice",
     email: "alice@prisma.io",
