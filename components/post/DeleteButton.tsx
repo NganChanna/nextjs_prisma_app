@@ -1,6 +1,6 @@
 "use client";
 
-import { deletePost } from "@/lib/actions";
+import { deletePost } from "@/lib/actions/actions";
 import { useTransition } from "react";
 
 export function DeleteButton({ id }: { id: string }) {

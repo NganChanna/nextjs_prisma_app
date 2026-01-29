@@ -2,25 +2,37 @@ import Form from 'next/form'
 import prisma from '@/lib/prisma'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
-import { SubmitButton } from '@/components/SubmitButton'
+import { SubmitButton } from '@/components/shared/SubmitButton'
 import Link from 'next/link'
+import { auth } from '@/lib/auth'
+import { headers } from 'next/headers'
+import { ArrowLeft } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
 
 export default async function NewPost() {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  })
 
-  const users = await prisma.users.findMany({
-    orderBy: { name: 'asc'},
-  });
+  if (!session) {
+    redirect('/signin')
+  }
 
   async function createPost(formData: FormData) {
     'use server'
 
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    })
+
+    if (!session) {
+      throw new Error('Unauthorized')
+    }
+
     const title = formData.get('title') as string
     const content = formData.get('content') as string
-    const authorId = formData.get('authorId') as string
-
-    if (!authorId) {
-      throw new Error('Author is required')
-    }
+    const authorId = session.user.id
    
     await prisma.post.create({
       data: {
@@ -31,109 +43,60 @@ export default async function NewPost() {
       },
     })
 
+    revalidatePath('/')
     revalidatePath('/posts')
-    redirect('/posts')
+    redirect('/')
   }
 
   return (
-    <div className="min-h-screen bg-background py-20 px-6 font-[family-name:var(--font-geist-sans)]">
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="mb-12">
-          <h1 className="text-4xl font-black text-foreground tracking-tighter leading-tight">
-            Draft a new <span className="text-blue-600">story</span>
-          </h1>
-          <p className="text-xl text-muted-foreground mt-4 leading-relaxed">
-            Share your thoughts with the world. Your post will be published immediately.
-          </p>
+    <div className="min-h-screen bg-background py-12 px-4">
+      <div className="max-w-3xl mx-auto">
+        <Link href="/" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-8">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Feed
+        </Link>
+
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight mb-2">Create a New Post</h1>
+          <p className="text-muted-foreground">Share your thoughts, ideas, or stories with the community.</p>
         </div>
 
-        {/* Form Card */}
-        <div className="bg-card border border-border rounded-[2rem] shadow-sm p-8 md:p-12">
-          <Form action={createPost} className="space-y-10">
-
-            {/* Author Select */}
-          <div className="space-y-3">
-            <label
-              htmlFor="authorId"
-              className="text-sm font-bold text-foreground/70 ml-1 uppercase tracking-wider"
-            >
-              Author
-            </label>
-
-            <select
-              id="authorId"
-              name="authorId"
-              required
-              className="w-full px-6 py-4 bg-muted border border-transparent rounded-2xl
-                focus:bg-card focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500
-                transition-all outline-none text-lg text-foreground"
-            >
-              <option value="" disabled>
-                Select your name
-              </option>
-
-              {users.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.name ?? 'Unnamed Author'}
-                </option>
-              ))}
-            </select>
-            </div>
-
-
-            {/* Title Input */}
-            <div className="space-y-3">
-              <label 
-                htmlFor="title" 
-                className="text-sm font-bold text-foreground/70 ml-1 uppercase tracking-wider"
-              >
-                Post Title
+        <div className="bg-card border rounded-xl p-6 md:p-10 shadow-sm">
+          <Form action={createPost} className="space-y-8">
+            <div className="space-y-2">
+              <label htmlFor="title" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Title
               </label>
-              <input
-                type="text"
+              <Input
                 id="title"
                 name="title"
                 required
-                placeholder="What's on your mind?"
-                className="w-full px-6 py-4 bg-muted border border-transparent rounded-2xl focus:bg-card focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-lg text-foreground placeholder:text-muted-foreground"
+                placeholder="Give your post a catchy title"
+                className="text-lg py-6"
               />
             </div>
 
-            {/* Content Textarea */}
-            <div className="space-y-3">
-              <label 
-                htmlFor="content" 
-                className="text-sm font-bold text-foreground/70 ml-1 uppercase tracking-wider"
-              >
+            <div className="space-y-2">
+              <label htmlFor="content" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                 Content
               </label>
               <textarea
                 id="content"
                 name="content"
                 required
-                placeholder="Start typing your story..."
-                rows={10}
-                className="w-full px-6 py-4 bg-muted border border-transparent rounded-2xl focus:bg-card focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-lg text-foreground placeholder:text-muted-foreground resize-none leading-relaxed"
+                placeholder="Write your story here..."
+                className="flex min-h-[400px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-y"
               />
             </div>
 
-            {/* Action Buttons */}
-            <div className="pt-6 flex items-center gap-6">
-                <SubmitButton />
-                
-                <Link
-                    href="/posts"
-                    className="px-6 py-4 text-sm font-bold text-muted-foreground hover:text-foreground transition-colors uppercase tracking-widest"
-                >
-                    Cancel
-                </Link>
+            <div className="flex items-center justify-end gap-4 pt-4">
+              <Link href="/">
+                <Button variant="ghost" type="button">Cancel</Button>
+              </Link>
+              <SubmitButton />
             </div>
           </Form>
         </div>
-        <p className="text-center text-xs text-muted-foreground mt-8">
-          Tip: You can use Markdown-style formatting in the content area.
-        </p>
       </div>
     </div>
   );

@@ -1,87 +1,79 @@
 import prisma from '@/lib/prisma'
 import Link from 'next/link'
-import { Fade } from '@/components/Fade'
+import { formatDistanceToNow } from 'date-fns'
+import { Fade } from '@/components/shared/Fade'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
+import { ArrowLeft, Plus } from 'lucide-react'
 
 export default async function Posts() {
   const posts = await prisma.post.findMany({
+    where: { published: true },
     include: { author: true },
+    orderBy: { createdAt: 'desc' },
   })
 
   return (
-    <div className="min-h-screen bg-background px-6 py-20">
-      <main className="max-w-3xl mx-auto">
+    <div className="min-h-screen bg-background pb-20">
+      <div className="container max-w-5xl mx-auto px-4 py-8">
         
-        {/* Header */}
-        <Fade>
-          <header className="mb-16">
-            <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight text-foreground leading-tight">
-              Latest <span className="text-blue-600">Stories</span>
+        {/* Navigation & Header */}
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-12">
+          <div>
+            <Link href="/" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Home
+            </Link>
+            <h1 className="text-3xl md:text-4xl font-bold tracking-tight">
+              Explore Stories
             </h1>
-            <p className="mt-4 text-xl text-muted-foreground leading-relaxed">
-              Explore the latest insights and thoughts from our community.
+            <p className="text-muted-foreground mt-2">
+              Discover the latest perspectives from our writers.
             </p>
-          </header>
-        </Fade>
+          </div>
+          <Link href="/posts/new">
+            <Button className="gap-2">
+              <Plus className="h-4 w-4" />
+              Write a Story
+            </Button>
+          </Link>
+        </div>
 
-        {/* Posts */}
-        <div className="space-y-8">
+        {/* Posts Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {posts.map((post, i) => (
-            <Fade key={post.id} delay={0.05 + i * 0.05}>
-              <article className="group bg-card border border-border rounded-3xl p-8 transition-all duration-300 hover:shadow-xl hover:shadow-blue-500/5">
-                
-                {/* Title */}
-                <div className="flex items-start justify-between gap-4">
-                  <h2 className="text-2xl font-bold text-foreground group-hover:text-blue-600 transition-colors">
-                    {post.title}
-                  </h2>
+            <Fade key={post.id} delay={i * 0.05}>
+              <Link href={`/posts/${post.id}`} className="group block h-full">
+                <article className="flex flex-col h-full bg-card border rounded-2xl overflow-hidden hover:shadow-lg hover:border-primary/50 transition-all duration-300">
+                  <div className="p-6 flex-1">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src={post.author?.image || ''} alt={post.author?.name || 'Author'} />
+                        <AvatarFallback>{post.author?.name?.charAt(0) || 'U'}</AvatarFallback>
+                      </Avatar>
+                      <div className="text-xs">
+                        <p className="font-medium text-foreground">{post.author?.name || 'Unknown'}</p>
+                        <p className="text-muted-foreground">
+                          {formatDistanceToNow(new Date(post.createdAt), { addSuffix: true })}
+                        </p>
+                      </div>
+                    </div>
 
-                  <span className="shrink-0 rounded-full bg-blue-500/10 px-3 py-1 text-xs font-semibold text-blue-600">
-                    Article
-                  </span>
-                </div>
-
-                {/* Meta */}
-                <div className="mt-3 flex items-center text-sm text-muted-foreground">
-                  <div className="mr-2 h-6 w-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-xs font-bold text-white">
-                    {post.author?.name?.charAt(0) || 'U'}
+                    <h2 className="text-xl font-bold mb-3 line-clamp-2 group-hover:text-primary transition-colors">
+                      {post.title}
+                    </h2>
+                    
+                    <p className="text-muted-foreground text-sm line-clamp-3 leading-relaxed">
+                      {post.content || 'No preview available.'}
+                    </p>
                   </div>
-
-                  <span className="font-medium text-foreground">
-                    {post.author?.name ?? 'Unknown Author'}
-                  </span>
-
-                  <span className="mx-2 text-border">•</span>
-                  <span>5 min read</span>
-                </div>
-
-                {/* Excerpt */}
-                <p className="mt-5 text-muted-foreground text-sm leading-relaxed line-clamp-2">
-                  {post.content?.substring(0, 160) || 'No content available.'}
-                </p>
-
-                {/* Action */}
-                <div className="mt-8 pt-6 border-t border-border flex justify-end">
-                  <Link
-                    href={`/posts/${post.id}`}
-                    className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-500/20 active:scale-[0.98]"
-                  >
-                    Read full post
-                    <svg
-                      className="h-4 w-4"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="2"
-                        d="M14 5l7 7m0 0l-7 7m7-7H3"
-                      />
-                    </svg>
-                  </Link>
-                </div>
-              </article>
+                  
+                  <div className="px-6 py-4 bg-muted/20 border-t mt-auto flex items-center justify-between text-xs text-muted-foreground font-medium">
+                    <span>5 min read</span>
+                    <span className="text-primary group-hover:underline">Read full story</span>
+                  </div>
+                </article>
+              </Link>
             </Fade>
           ))}
         </div>
@@ -89,14 +81,17 @@ export default async function Posts() {
         {/* Empty State */}
         {posts.length === 0 && (
           <Fade>
-            <div className="mt-20 rounded-3xl border border-dashed border-border bg-card py-20 text-center">
-              <p className="text-muted-foreground italic">
-                No posts yet. Start writing your first story.
+            <div className="mt-20 py-20 text-center border-2 border-dashed rounded-3xl bg-muted/10">
+              <p className="text-muted-foreground text-lg mb-6">
+                No stories have been published yet.
               </p>
+              <Link href="/posts/new">
+                <Button variant="outline">Be the first to write one</Button>
+              </Link>
             </div>
           </Fade>
         )}
-      </main>
+      </div>
     </div>
   )
 }

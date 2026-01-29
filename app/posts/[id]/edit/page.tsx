@@ -1,8 +1,13 @@
 import prisma from '@/lib/prisma'
-import { notFound } from 'next/navigation'
-import { updatePost } from '@/lib/actions'
+import { notFound, redirect } from 'next/navigation'
+import { updatePost } from '@/lib/actions/actions'
 import Link from 'next/link'
-import { Fade } from '@/components/Fade'
+import { auth } from '@/lib/auth'
+import { headers } from 'next/headers'
+import { ArrowLeft } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { SubmitButton } from '@/components/shared/SubmitButton'
 
 export default async function EditPost({
   params,
@@ -11,6 +16,14 @@ export default async function EditPost({
 }) {
   const { id } = await params
 
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  })
+
+  if (!session) {
+    redirect('/signin')
+  }
+
   const post = await prisma.post.findUnique({
     where: { id },
     include: {
@@ -18,76 +31,45 @@ export default async function EditPost({
     }
   })
 
-  const users = await prisma.users.findMany({
-    orderBy: { name: 'asc'},
-  });
-
-
   if (!post) notFound()
+
+  if (post.authorId !== session.user.id) {
+    redirect(`/posts/${id}`)
+  }
 
   const updatePostWithId = updatePost.bind(null, id)
 
   return (
-    <div className="min-h-screen bg-background py-20 px-6 font-[family-name:var(--font-geist-sans)]">
-      <div className="max-w-2xl mx-auto">
-        <div className="mb-12">
-          <h1 className="text-4xl font-black text-foreground tracking-tighter leading-tight">
-            Edit your <span className="text-blue-600">story</span>
-          </h1>
-          <p className="text-xl text-muted-foreground mt-4 leading-relaxed">
-            Refine your thoughts and update your post.
-          </p>
+    <div className="min-h-screen bg-background py-12 px-4">
+      <div className="max-w-3xl mx-auto">
+        <Link href={`/posts/${id}`} className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors mb-8">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Post
+        </Link>
+
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight mb-2">Edit Post</h1>
+          <p className="text-muted-foreground">Make changes to your story.</p>
         </div>
 
-        <div className="bg-card border border-border rounded-[2rem] shadow-sm p-8 md:p-12">
-          <form action={updatePostWithId} className="space-y-10">
-
-             {/* Author Select */}
-          <div className="space-y-3">
-            <label
-              htmlFor="authorId"
-              className="text-sm font-bold text-foreground/70 ml-1 uppercase tracking-wider"
-            >
-              Author
-            </label>
-
-            <select
-              id="authorId"
-              name="authorId"
-              required  
-              className="w-full px-6 py-4 bg-muted border border-transparent rounded-2xl
-                focus:bg-card focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500
-                transition-all outline-none text-lg text-foreground"
-            >
-              <option value="" disabled>
-                Select your name
-              </option>
-
-              {users.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.name ?? 'Unnamed Author'}
-                  {user.id === post.authorId && ' (current)'}
-                </option>
-              ))}
-            </select>
-            </div>
-
-            <div className="space-y-3">
-              <label htmlFor="title" className="text-sm font-bold text-foreground/70 ml-1 uppercase tracking-wider">
-                Post Title
+        <div className="bg-card border rounded-xl p-6 md:p-10 shadow-sm">
+          <form action={updatePostWithId} className="space-y-8">
+            <div className="space-y-2">
+              <label htmlFor="title" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Title
               </label>
-              <input
-                type="text"
+              <Input
                 id="title"
                 name="title"
                 required
                 defaultValue={post.title}
-                className="w-full px-6 py-4 bg-muted border border-transparent rounded-2xl focus:bg-card focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-lg text-foreground"
+                placeholder="Give your post a catchy title"
+                className="text-lg py-6"
               />
             </div>
 
-            <div className="space-y-3">
-              <label htmlFor="content" className="text-sm font-bold text-foreground/70 ml-1 uppercase tracking-wider">
+            <div className="space-y-2">
+              <label htmlFor="content" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
                 Content
               </label>
               <textarea
@@ -95,24 +77,16 @@ export default async function EditPost({
                 name="content"
                 required
                 defaultValue={post.content ?? ""}
-                rows={10}
-                className="w-full px-6 py-4 bg-muted border border-transparent rounded-2xl focus:bg-card focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all outline-none text-lg text-foreground resize-none leading-relaxed"
+                placeholder="Write your story here..."
+                className="flex min-h-[400px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-y"
               />
             </div>
 
-            <div className="pt-6 flex items-center gap-6">
-              <button
-                type="submit"
-                className="flex-1 bg-blue-600 text-white font-bold py-4 px-8 rounded-2xl hover:bg-blue-700 active:scale-[0.98] transition-all shadow-xl shadow-blue-500/20"
-              >
-                Save Changes
-              </button>
-              <Link
-                href={`/posts/${id}`}
-                className="px-6 py-4 text-sm font-bold text-muted-foreground hover:text-foreground transition-colors uppercase tracking-widest"
-              >
-                Cancel
+            <div className="flex items-center justify-end gap-4 pt-4">
+              <Link href={`/posts/${id}`}>
+                <Button variant="ghost" type="button">Cancel</Button>
               </Link>
+              <SubmitButton />
             </div>
           </form>
         </div>
