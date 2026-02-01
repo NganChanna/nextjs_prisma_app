@@ -1,4 +1,4 @@
-import prisma from '@/lib/prisma'
+import { getArticlePosts } from '@/lib/actions/feed.action'
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import { Fade } from '@/components/shared/Fade'
@@ -7,11 +7,8 @@ import { Button } from '@/components/ui/button'
 import { ArrowLeft, Plus } from 'lucide-react'
 
 export default async function Posts() {
-  const posts = await prisma.post.findMany({
-    where: { published: true },
-    include: { author: true },
-    orderBy: { createdAt: 'desc' },
-  })
+    
+  const posts = await getArticlePosts();
 
   return (
     <div className="min-h-screen bg-background pb-20">

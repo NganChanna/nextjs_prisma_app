@@ -61,3 +61,16 @@ export async function searchAuthors(query: string) {
 
   return authors;
 }
+
+export async function getArticlePosts() {
+	const posts = await prisma.post.findMany({
+    where: { published: true },
+    include: { author: true },
+    orderBy: { createdAt: 'desc' },
+    take: 100,
+  })
+
+  const shuffledPosts = posts.sort(() => 0.5 - Math.random());
+
+  return shuffledPosts
+}
