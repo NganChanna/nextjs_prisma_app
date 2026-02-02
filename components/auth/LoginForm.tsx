@@ -33,7 +33,7 @@ export function LoginForm() {
 					onStart: () => {
 						toast.loading("Logging in...");
 					},
-					onSuccess: async (ctx) => {
+					onSuccess: async (ctx: any) => {
 						if ((ctx.data as any).twoFactorRedirect) {
 							router.push("/two-factor");
 							toast.dismiss();
