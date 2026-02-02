@@ -2,7 +2,7 @@ import { betterAuth } from 'better-auth'
 import { prismaAdapter } from 'better-auth/adapters/prisma'
 import  prisma  from '@/lib/prisma'
 import { APIError, createAuthMiddleware } from 'better-auth/api';
-import { sendEmailAction } from './actions/sendEmailAction.action';
+import { sendOTPAction } from './actions/sendOTPAction.action';
 import { twoFactor } from "better-auth/plugins";
 
 export const auth = betterAuth({
@@ -25,6 +25,12 @@ export const auth = betterAuth({
             otpOptions: {
                 period: 30,
                 digits: 6,
+                sendOTP: async ({ user, otp }) => {
+                    await sendOTPAction({
+                        to: user.email,
+                        otp: otp
+                    });
+                }
             },
         }),
     ],
