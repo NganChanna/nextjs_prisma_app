@@ -3,6 +3,7 @@ import { prismaAdapter } from 'better-auth/adapters/prisma'
 import  prisma  from '@/lib/prisma'
 import { APIError, createAuthMiddleware } from 'better-auth/api';
 import { sendOTPAction } from './actions/sendOTPAction.action';
+import { sendEmailAction } from './actions/sendEmailAction.action';
 import { twoFactor } from "better-auth/plugins";
 
 export const auth = betterAuth({
