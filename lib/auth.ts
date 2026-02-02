@@ -53,7 +53,7 @@ export const auth = betterAuth({
 			});
 		},
 	},
-    // trustedOrigins: ['http://localhost:3000', 'http://localhost:3001'],
+    trustedOrigins: ['http://localhost:3000', 'http://localhost:3001', 'https://nextjs-prisma-app-jn9j.vercel.app'],
     session: {
 		cookieCache: {
 			enabled: true,
