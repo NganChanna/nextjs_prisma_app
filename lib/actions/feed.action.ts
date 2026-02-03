@@ -24,7 +24,10 @@ export async function getFeedPosts() {
     take: 50,
   });
 
-  return posts;
+  // Shuffle posts to mimic "random all the time"
+  const shuffledPosts = posts.sort(() => 0.5 - Math.random());
+
+  return shuffledPosts;
 }
 
 export async function searchAuthors(query: string) {
@@ -59,5 +62,7 @@ export async function getArticlePosts() {
     take: 100,
   })
 
-  return posts
+  const shuffledPosts = posts.sort(() => 0.5 - Math.random());
+  
+  return shuffledPosts
 }
