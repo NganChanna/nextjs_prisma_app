@@ -6,6 +6,34 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 
+export async function createPost(formData: FormData) {
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    throw new Error("Unauthorized");
+  }
+
+  const title = formData.get("title") as string;
+  const content = formData.get("content") as string;
+  const authorId = session.user.id;
+
+  const post = await prisma.post.create({
+    data: {
+      title,
+      content,
+      authorId,
+      published: true,
+    },
+  });
+
+  revalidatePath("/");
+  revalidatePath("/posts");
+  
+  return post;
+}
+
 export async function updatePost(id: string, formData: FormData) {
   const session = await auth.api.getSession({
     headers: await headers(),

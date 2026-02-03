@@ -1,21 +1,13 @@
 "use server";
 
 import prisma from "@/lib/prisma";
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
 
 export async function getFeedPosts() {
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
 
-  const userId = session?.user?.id;
-
-  // Fetch posts where authorId is NOT the current user's ID
+  // Fetch all published posts
   const posts = await prisma.post.findMany({
     where: {
       published: true,
-      ...(userId ? { authorId: { not: userId } } : {}),
     },
     include: {
       author: {
@@ -27,15 +19,12 @@ export async function getFeedPosts() {
       },
     },
     orderBy: {
-      createdAt: "desc", // Default sorting for now, will shuffle in memory
+      createdAt: "desc",
     },
-    take: 50, // Fetch limit to avoid overloading
+    take: 50,
   });
 
-  // Shuffle posts to mimic "random all the time"
-  const shuffledPosts = posts.sort(() => 0.5 - Math.random());
-
-  return shuffledPosts;
+  return posts;
 }
 
 export async function searchAuthors(query: string) {
@@ -63,14 +52,12 @@ export async function searchAuthors(query: string) {
 }
 
 export async function getArticlePosts() {
-	const posts = await prisma.post.findMany({
+	  const posts = await prisma.post.findMany({
     where: { published: true },
     include: { author: true },
     orderBy: { createdAt: 'desc' },
     take: 100,
   })
 
-  const shuffledPosts = posts.sort(() => 0.5 - Math.random());
-
-  return shuffledPosts
+  return posts
 }
