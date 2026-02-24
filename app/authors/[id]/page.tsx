@@ -7,6 +7,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Fade } from '@/components/shared/Fade'
 
+export const dynamic = 'force-dynamic'
+
 export default async function UserProfile({
   params,
 }: {

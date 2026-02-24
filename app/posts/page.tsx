@@ -5,6 +5,8 @@ import { Fade } from '@/components/shared/Fade'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ArrowLeft, Plus, ArrowUpRight } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 export default async function Posts() {
 
   const posts = await getArticlePosts();

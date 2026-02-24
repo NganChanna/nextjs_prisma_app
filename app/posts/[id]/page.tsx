@@ -9,6 +9,8 @@ import { headers } from 'next/headers'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { ArrowLeft, Edit2, Clock } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 export default async function Post({
   params,
 }: {

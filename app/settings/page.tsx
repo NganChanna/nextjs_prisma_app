@@ -5,6 +5,8 @@ import prisma from "@/lib/prisma";
 import { TwoFactorSettings } from "@/components/settings/TwoFactorSettings";
 import { Fade } from "@/components/shared/Fade";
 
+export const dynamic = 'force-dynamic'
+
 export default async function SettingsPage() {
   const session = await auth.api.getSession({
     headers: await headers(),

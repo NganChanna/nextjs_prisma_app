@@ -1,13 +1,16 @@
-# Use Node.js 18 or higher
-FROM node:18-alpine AS base
+# Use Node.js 24 Alpine for a small footprint
+FROM node:24-alpine AS base
 
 # 1. Install dependencies only when needed
 FROM base AS deps
-RUN apk add --no-cache libc6-compat
+# Install openssl for Prisma schema generation compatibility
+RUN apk add --no-cache libc6-compat openssl
 WORKDIR /app
 
+# Install dependencies, bypassing postinstall scripts (avoids early prisma generate failure)
 COPY package.json package-lock.json ./
-RUN npm ci
+RUN npm ci --ignore-scripts
+
 
 # 2. Rebuild the source code only when needed
 FROM base AS builder
@@ -15,16 +18,29 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# This will generate the Prisma client and build the Next.js app
+# Explicitly generate the Prisma client
 RUN npx prisma generate
+
+# Provide dummy build-time environment variables.
+# Next.js statically pre-renders pages at build time. For pages that fetch from Prisma,
+# this prevents the build from crashing when .env isn't available.
+ENV BETTER_AUTH_SECRET=placeholder
+ENV DATABASE_URL=postgresql://placeholder_user:placeholder_pass@localhost:5432/placeholder_db
+ENV NEXT_PUBLIC_API_URL=http://localhost:3000
+
+# Build Next.js application
 RUN npm run build
+
 
 # 3. Production image, copy all the files and run next
 FROM base AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
+# Next.js standalone mode + Prisma requires openssl in the runner container too
+RUN apk add --no-cache openssl
 
+# Secure container by running as non-root user
 RUN addgroup -g 1001 -S nodejs
 RUN adduser -S nextjs -u 1001
 
@@ -35,11 +51,12 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Switch to non-root user
 USER nextjs
 
 EXPOSE 3000
-
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
+# Note: Since Next.js copies server.js into the standalone folder, we launch from that.
 CMD ["node", "server.js"]

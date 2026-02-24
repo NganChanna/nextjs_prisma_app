@@ -2,11 +2,11 @@ import prisma from '@/lib/prisma'
 import Link from 'next/link'
 import { Fade } from '@/components/shared/Fade'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { ArrowLeft, Users, ChevronRight, FileText } from 'lucide-react'
-
+import { ArrowLeft, ChevronRight, FileText, Users } from 'lucide-react'
+    
 export const dynamic = 'force-dynamic'
 
-export default async function AuthorsPage() {
+export default async function AuthorsDirectory() {
     const authors = await prisma.user.findMany({
         include: {
             _count: {
