@@ -1,0 +1,178 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../app/generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// --- ENUMS ---
+enum MediaType {
+  IMAGE
+  VIDEO
+}
+
+// --- EXISTING USER MODEL (UPDATED) ---
+model User {
+  id            String   @id @default(uuid())
+  name          String
+  email         String   @unique
+  emailVerified Boolean  @default(false)
+  image         String?
+  bio           String? // [NEW] User bio
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  // Auth relations
+  twoFactorEnabled Boolean    @default(false)
+  password         String?
+  accounts         Account[]
+  sessions         Session[]
+  twoFactor        TwoFactor?
+
+  // [NEW] Social Relations
+  posts    Post[]
+  stories  Story[]
+  comments Comment[]
+  likes    Like[]
+
+  // [NEW] Follow System (Self-relation)
+  followedBy Follows[] @relation("followedBy")
+  following  Follows[] @relation("following")
+
+  @@map("user")
+}
+
+// --- POST SYSTEM (UPDATED) ---
+model Post {
+  id        String   @id @default(uuid())
+  content   String? // Changed 'title' to content/caption. FB posts rarely have titles.
+  published Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  authorId String
+  author   User   @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  // [NEW] Relationships
+  media    Media[] // A post can have multiple images/videos (Carousel)
+  comments Comment[]
+  likes    Like[]
+}
+
+// [NEW] MEDIA MODEL
+// Handles images/videos for Posts specifically
+model Media {
+  id         String    @id @default(uuid())
+  url        String? // Optional: Mux doesn't give a direct file URL like S3
+  muxAssetId String? // The internal ID for Mux management
+  playbackId String? // The ID used to play the video publicly
+  type       MediaType // VIDEO
+  createdAt  DateTime  @default(now())
+
+  postId String?
+  post   Post?   @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+// [NEW] STORY MODEL
+// Stories are separate from posts because they expire
+model Story {
+  id        String    @id @default(uuid())
+  mediaUrl  String
+  mediaType MediaType
+  createdAt DateTime  @default(now())
+  expiresAt DateTime // You will set this to now() + 24h in your API
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// [NEW] INTERACTION MODELS
+model Comment {
+  id        String   @id @default(uuid())
+  text      String
+  createdAt DateTime @default(now())
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  postId String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model Like {
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId]) // Prevents a user from liking the same post twice
+}
+
+model Follows {
+  followerId  String
+  followingId String
+
+  follower  User @relation("following", fields: [followerId], references: [id])
+  following User @relation("followedBy", fields: [followingId], references: [id])
+
+  @@id([followerId, followingId])
+}
+
+// --- EXISTING AUTH MODELS (KEEP AS IS) ---
+model Session {
+  id        String   @id @default(uuid())
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id @default(uuid())
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id @default(uuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("verification")
+}
+
+model TwoFactor {
+  id          String @id @default(uuid())
+  secret      String
+  backupCodes String
+  userId      String @unique
+  user        User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("twoFactor")
+}

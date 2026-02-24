@@ -2,87 +2,79 @@
 
 import transporter from "@/lib/nodemailer";
 
-// if you want to use resent
-// import { Resend } from "resend";
+/**
+ * @Email Template Helper
+ */ 
 
-// const resend = new Resend("re_xxxxxxxxx");
-
-const styles = {
-	container: "max-width:500px;margin:20px auto;padding:20px;border:1px solid #ddd;border-radius:6px;",
-	heading: "font-size:20px;color:#333;",
-	paragraph: "font-size:16px;",
-	link: "display:inline-block;margin-top:15px;padding:10px 15px;background:#007bff;color:#fff;text-decoration:none;border-radius:4px;",
+const generateEmailTemplate = (subject: string, description: string, link: string) => {
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f4f4; margin: 0; padding: 0; }
+        .container { max-width: 600px; margin: 20px auto; background: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header { text-align: center; border-bottom: 1px solid #eeeeee; padding-bottom: 20px; margin-bottom: 20px; }
+        .heading { color: #333333; font-size: 24px; margin: 0; }
+        .content { color: #555555; font-size: 16px; line-height: 1.6; }
+        .button-container { text-align: center; margin-top: 30px; }
+        .button { display: inline-block; background-color: #007bff; color: #ffffff; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; }
+        .footer { margin-top: 30px; font-size: 12px; color: #999999; text-align: center; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1 class="heading">SecureStart</h1>
+        </div>
+        <div class="content">
+          <h2 style="font-size: 20px; color: #333;">${subject}</h2>
+          <p>${description}</p>
+          <div class="button-container">
+            <a href="${link}" class="button">View Action</a>
+          </div>
+        </div>
+        <div class="footer">
+          <p>If you did not request this email, please ignore it.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
 };
 
+
 export async function sendEmailAction({
-	to,
-	subject,
-	meta,
+  to,
+  subject,
+  meta,
 }: {
-	to: string;
-	subject: string;
-	meta: {
-		description: string;
-		link: string;
-	};
+  to: string;
+  subject: string;
+  meta: {
+    description: string;
+    link: string;
+  };
 }) {
-	const mailOptions = {
-		from: process.env.NODEMAILER_USER,
-		to,
-		subject: `SecureStart - ${subject}`,
-		html: `
-    <div style="${styles.container}">
-      <h1 style="${styles.heading}">${subject}</h1>
-      <p style="${styles.paragraph}">${meta.description}</p>
-      <a href="${meta.link}" style="${styles.link}">Click Here</a>
-    </div>
-    `,
-	};
 
-	try {
-		await transporter.sendMail(mailOptions);
-		return { success: true };
-	} catch (err) {
-		console.error("[SendEmail]:", err);
-		return { success: false };
-	}
+  /**
+   * @Generate the HTML using the helper function
+   */ 
+  const htmlContent = generateEmailTemplate(subject, meta.description, meta.link);
+
+  const mailOptions = {
+    from: process.env.NODEMAILER_USER,
+    to,
+    subject: `SecureStart - ${subject}`,
+    html: htmlContent,
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log(`[SendEmail]: Email sent to ${to}`);
+    return { success: true };
+  } catch (err) {
+    console.error("[SendEmail]: Error sending email:", err);
+    return { success: false, error: "Failed to send email" };
+  }
 }
-
-// if you want to use resend email service
-
-// export async function sendEmailAction({
-// 	to,
-// 	subject,
-// 	meta,
-// }: {
-// 	to: string;
-// 	subject: string;
-// 	meta: {
-// 		description: string;
-// 		link: string;
-// 	};
-// }) {
-// 	try {
-// 		const { data, error } = await resend.emails.send({
-// 			from: process.env.RESENT_EMAIL || "<your_email@example.com>",
-// 			to,
-// 			subject: `SecureStart - ${subject}`,
-// 			html: `
-//     <div style="${styles.container}">
-//       <h1 style="${styles.heading}">${subject}</h1>
-//       <p style="${styles.paragraph}">${meta.description}</p>
-//       <a href="${meta.link}" style="${styles.link}">Click Here</a>
-//     </div>
-//     `,
-// 		});
-
-// 		if (error) {
-// 			return { success: false, error };
-// 		}
-
-// 		return { success: true, data };
-// 	} catch (error) {
-// 		console.error("[SendEmail]:", error);
-// 		return { success: false, error };
-// 	}
-// }
