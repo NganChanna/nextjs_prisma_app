@@ -1,36 +1,121 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Liquid Glass Next.js Blog
 
-## Getting Started
+A premium, modern, and performant blog platform built with Next.js 15, Prisma ORM, and Better Auth. Featuring a breathtaking "Liquid Glass" UI design aesthetic built on Tailwind CSS, this project provides an exquisite reading and writing experience.
 
-First, run the development server:
+![Hero Banner](https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop) *(Placeholder banner)*
 
+## ✨ Features
+* **Liquid Glass UI:** Beautiful transparent glass cards, dramatic typography, blur backdrops, and satisfying hover animations powered by Aceternity UI and Shadcn.
+* **Full-stack Next.js 15:** Utilizes Next.js App Router, Server Components, Server Actions, and Turbopack for insane speeds.
+* **Authentication:** Robust JWT & Cookie-based auth with Multiple Providers (Email, Google, Github), 2FA, and Password Resets via [Better Auth](https://www.better-auth.com/).
+* **Database:** Robust type-safe interactions via Prisma ORM connected to PostgreSQL.
+* **Dockerized:** Ready for scalable deployments via Docker and Docker Compose.
+
+## 🚀 Getting Started
+
+You can run this project locally on your machine or instantly spin it up inside a Docker container.
+
+### Prerequisites
+
+* [Node.js](https://nodejs.org/) 22+ or higher
+* [Docker](https://www.docker.com/) (Optional, for containerized deployment)
+* A PostgreSQL Database (Local or cloud like [Neon](https://neon.tech/))
+
+---
+
+### Method 1: Local Development (Recommended for coding)
+
+**1. Clone the repository:**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/yourusername/nextjs-prisma.git
+cd nextjs-prisma
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**2. Install dependencies:**
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**3. Configure Environment Variables:**
+Rename the provided `.env.example` file to `.env` or create a new `.env` file in the root directory. Fill in your PostgreSQL database URL, your Better Auth secrets, and your OAuth app credentials.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/superblog_db?schema=public"
+NEXT_PUBLIC_API_URL=http://localhost:3000
 
-## Learn More
+# Generate a random 32 character string for this
+BETTER_AUTH_SECRET=your_super_secret_string
+BETTER_AUTH_URL=http://localhost:3000
 
-To learn more about Next.js, take a look at the following resources:
+# Only needed if you plan to use Google/Github login and Email OTPs
+GITHUB_CLIENT_ID=
+GITHUB_CLIENT_SECRET=
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+SMTP_HOST=
+SMTP_PORT=
+NODEMAILER_USER=
+NODEMAILER_APP_PASSWORD=
+EMAIL_DOMAIN=
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**4. Push Database Schema:**
+Sync your Prisma schema with your fresh database to create all the necessary tables.
+```bash
+npx prisma db push
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**5. Start the Development Server:**
+```bash
+npm run dev
+```
+Your app will be running at [http://localhost:3000](http://localhost:3000).
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Method 2: Docker Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+If you prefer to run the entire stack (Next.js Application + PostgreSQL Database) locally without installing Node.js directly, you can use Docker.
+
+**1. Clone the repository:**
+```bash
+git clone https://github.com/yourusername/nextjs-prisma.git
+cd nextjs-prisma
+```
+
+**2. Configure Environment Variables:**
+Create your `.env` file just like in Method 1. Since the provided `docker-compose.yml` spins up a PostgreSQL container named `db` internally, **you MUST set your `DATABASE_URL` to point to the docker container:**
+
+```env
+DATABASE_URL=postgresql://user:password@db:5432/superblog_db?schema=public
+NEXT_PUBLIC_API_URL=http://localhost:3000
+BETTER_AUTH_SECRET=your_super_secret_string
+BETTER_AUTH_URL=http://localhost:3000
+# ... add OAuth/SMTP credentials as needed ...
+```
+
+**3. Build and Start the Containers:**
+```bash
+docker compose up --build -d
+```
+
+**4. Generate Database Tables (First time only):**
+Once the containers are running for the first time, your database is empty. Push the Prisma schema from your host machine into the running Docker container via its exposed port `5432`:
+```powershell
+# Windows Powershell
+$env:DATABASE_URL="postgresql://user:password@localhost:5432/superblog_db?schema=public"; npx prisma db push
+
+# Mac/Linux bash:
+# DATABASE_URL="postgresql://user:password@localhost:5432/superblog_db?schema=public" npx prisma db push
+```
+
+Your app will be up and running at [http://localhost:3000](http://localhost:3000).
+
+## 🛠️ Stack Architecture
+
+* **Framework:** Next.js (App Router)
+* **Styling:** Tailwind CSS
+* **Components:** Shadcn UI + Radix Primitives + Lucide Icons + Framer Motion
+* **ORM:** Prisma
+* **Authentication:** Better Auth
+* **Infrastructure:** Docker
