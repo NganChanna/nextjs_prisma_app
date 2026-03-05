@@ -58,5 +58,4 @@ EXPOSE 3000
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Note: Since Next.js copies server.js into the standalone folder, we launch from that.
 CMD ["node", "server.js"]
